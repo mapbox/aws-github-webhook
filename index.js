@@ -67,6 +67,25 @@ const WebhookDeployment = {
   }
 };
 
+const PassthroughWebhookDeployment = {
+  Type: 'AWS::ApiGateway::Deployment',
+  DependsOn: 'WebhookPassthroughMethod',
+  Properties: {
+    RestApiId: cf.ref('WebhookApi'),
+    StageName: 'github',
+    StageDescription: {
+      MethodSettings: [
+        {
+          HttpMethod: '*',
+          ResourcePath: '/*',
+          ThrottlingBurstLimit: 20,
+          ThrottlingRateLimit: 5
+        }
+      ]
+    }
+  }
+};
+
 const WebhookMethod = {
   Type: 'AWS::ApiGateway::Method',
   Properties: {
@@ -303,6 +322,13 @@ const Outputs = {
   }
 };
 
+const PassthroughOutputs = {
+  WebhookEndpoint: {
+    Description: 'The HTTPS endpoint used to send github webhooks',
+    Value: cf.sub('https://${WebhookApi}.execute-api.${AWS::Region}.amazonaws.com/github/webhook')
+  }
+};
+
 const builder = (lambda) => ({
   Outputs,
   Resources: {
@@ -321,10 +347,10 @@ const builder = (lambda) => ({
 });
 
 const passthrough = (lambda) => ({
-  Outputs,
+  Outputs: PassthroughOutputs,
   Resources: {
     WebhookApi,
-    WebhookDeployment,
+    PassthroughWebhookDeployment,
     WebhookPassthroughMethod: WebhookPassthroughMethod(lambda),
     WebhookResource,
     WebhookPassthroughPermission: WebhookPassthroughPermission(lambda)
