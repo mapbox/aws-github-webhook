@@ -43,7 +43,7 @@ const WebhookUserKey = {
 const WebhookApi = {
   Type: 'AWS::ApiGateway::RestApi',
   Properties: {
-    Name: cf.sub('${AWS::StackName}-github-webhook'),
+    Name: cf.sub('${AWS::StackName}-webhook'),
     FailOnWarnings: true
   }
 };
@@ -67,12 +67,12 @@ const WebhookDeployment = {
   }
 };
 
-const PassthroughWebhookDeployment = {
+const WebhookPassthroughDeployment = {
   Type: 'AWS::ApiGateway::Deployment',
   DependsOn: 'WebhookPassthroughMethod',
   Properties: {
     RestApiId: cf.ref('WebhookApi'),
-    StageName: 'github',
+    StageName: 'service',
     StageDescription: {
       MethodSettings: [
         {
@@ -324,8 +324,8 @@ const Outputs = {
 
 const PassthroughOutputs = {
   WebhookEndpoint: {
-    Description: 'The HTTPS endpoint used to send github webhooks',
-    Value: cf.sub('https://${WebhookApi}.execute-api.${AWS::Region}.amazonaws.com/github/webhook')
+    Description: 'The HTTPS endpoint used to send webhooks',
+    Value: cf.sub('https://${WebhookApi}.execute-api.${AWS::Region}.amazonaws.com/service/webhook')
   }
 };
 
@@ -350,7 +350,7 @@ const passthrough = (lambda) => ({
   Outputs: PassthroughOutputs,
   Resources: {
     WebhookApi,
-    PassthroughWebhookDeployment,
+    WebhookPassthroughDeployment,
     WebhookPassthroughMethod: WebhookPassthroughMethod(lambda),
     WebhookResource,
     WebhookPassthroughPermission: WebhookPassthroughPermission(lambda)
