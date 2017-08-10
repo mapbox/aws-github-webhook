@@ -162,10 +162,7 @@ const WebhookPassthroughMethod = (lambda) => ({
           SelectionPattern: '^invalid.*'
         }
       ],
-      Uri: cf.sub(`arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${lambda}.Arn}/invocations`),
-      RequestTemplates: {
-        'application/json': "{\"params\":\"$input.params()\",\"body\":$input.json('$')}"
-      }
+      Uri: cf.sub(`arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${lambda}.Arn}/invocations`)
     },
     MethodResponses: [
       {
