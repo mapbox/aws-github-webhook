@@ -164,7 +164,7 @@ const WebhookPassthroughMethod = (lambda) => ({
       ],
       Uri: cf.sub(`arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${lambda}.Arn}/invocations`),
       RequestTemplates: {
-        'application/json': "{\"headers\":{},\"body\":$input.json('$')}" // @TODO: include all headers
+        'application/json': "{\"headers\":$input.params('$'),\"body\":$input.json('$')}"
       }
     },
     MethodResponses: [
