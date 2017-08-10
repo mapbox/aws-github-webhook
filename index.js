@@ -147,7 +147,7 @@ const WebhookPassthroughMethod = (lambda) => ({
     AuthorizationType: 'None',
     HttpMethod: 'POST',
     Integration: {
-      Type: 'AWS_PROXY',
+      Type: 'AWS',
       IntegrationHttpMethod: 'POST',
       IntegrationResponses: [
         {
@@ -162,7 +162,10 @@ const WebhookPassthroughMethod = (lambda) => ({
           SelectionPattern: '^invalid.*'
         }
       ],
-      Uri: cf.sub(`arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${lambda}.Arn}/invocations`)
+      Uri: cf.sub(`arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${lambda}.Arn}/invocations`),
+      RequestTemplates: {
+        'application/json': "{\"headers\":\"$input.params()\",\"body\":$input.json('$'),\"method\":\"$context.httpMethod\"}"
+      }
     },
     MethodResponses: [
       {
