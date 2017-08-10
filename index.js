@@ -164,7 +164,7 @@ const WebhookPassthroughMethod = (lambda) => ({
       ],
       Uri: cf.sub(`arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${lambda}.Arn}/invocations`),
       RequestTemplates: {
-        "application/json": "{\n \"body\": $input.json('$'),\n \"headers\": {\n #foreach($header in $input.params().header.keySet())\n \"$header\": \"$util.escapeJavaScript($input.params().header.get($header))\" #if($foreach.hasNext),#end\n \n #end\n },\n \"method\": \"$context.httpMethod\",\n \"params\": {\n #foreach($param in $input.params().path.keySet())\n \"$param\": \"$util.escapeJavaScript($input.params().path.get($param))\" #if($foreach.hasNext),#end\n \n #end\n },\n \"query\": {\n #foreach($queryParam in $input.params().querystring.keySet())\n \"$queryParam\": \"$util.escapeJavaScript($input.params().querystring.get($queryParam))\" #if($foreach.hasNext),#end\n \n #end\n } \n}"
+        'application/json': "{\"headers\":\"$input.params()\",\"body\":$input.json('$'),\"method\":\"$context.httpMethod\"}"
       }
     },
     MethodResponses: [
