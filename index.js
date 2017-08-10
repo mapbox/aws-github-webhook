@@ -147,7 +147,7 @@ const WebhookPassthroughMethod = (lambda) => ({
     AuthorizationType: 'None',
     HttpMethod: 'POST',
     Integration: {
-      Type: 'AWS',
+      Type: 'AWS_PROXY',
       IntegrationHttpMethod: 'POST',
       IntegrationResponses: [
         {
