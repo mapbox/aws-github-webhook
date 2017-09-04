@@ -151,15 +151,24 @@ const WebhookPassthroughMethod = (lambda) => ({
       IntegrationHttpMethod: 'POST',
       IntegrationResponses: [
         {
-          StatusCode: 200
+          StatusCode: 200,
+          ResponseParameters: {
+            'method.response.header.Access-Control-Allow-Origin': '\'*\''
+          }
         },
         {
           StatusCode: 500,
-          SelectionPattern: '^error.*'
+          SelectionPattern: '^error.*',
+          ResponseParameters: {
+            'method.response.header.Access-Control-Allow-Origin': '\'*\''
+          }
         },
         {
           StatusCode: 400,
-          SelectionPattern: '^invalid.*'
+          SelectionPattern: '^invalid.*',
+          ResponseParameters: {
+            'method.response.header.Access-Control-Allow-Origin': '\'*\''
+          }
         }
       ],
       Uri: cf.sub(`arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${lambda}.Arn}/invocations`),
@@ -172,18 +181,27 @@ const WebhookPassthroughMethod = (lambda) => ({
         StatusCode: '200',
         ResponseModels: {
           'application/json': 'Empty'
+        },
+        ResponseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true
         }
       },
       {
         StatusCode: '500',
         ResponseModels: {
           'application/json': 'Empty'
+        },
+        ResponseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true
         }
       },
       {
         StatusCode: '400',
         ResponseModels: {
           'application/json': 'Empty'
+        },
+        ResponseParameters: {
+          'method.response.header.Access-Control-Allow-Origin': true
         }
       }
     ]
@@ -196,6 +214,42 @@ const WebhookResource = {
     ParentId: cf.getAtt('WebhookApi', 'RootResourceId'),
     RestApiId: cf.ref('WebhookApi'),
     PathPart: 'webhook'
+  }
+};
+
+const WebhookOptionsMethod = {
+  Type: 'AWS::ApiGateway::Method',
+  Properties: {
+    RestApiId: { Ref: 'WebhookApi' },
+    ResourceId: { Ref: 'WebhookResource' },
+    AuthorizationType: 'None',
+    HttpMethod: 'OPTIONS',
+    MethodResponses: [
+      {
+        StatusCode: 200,
+        ResponseModels: {
+          'application/json': 'Empty'
+        },
+        ResponseParameters: {
+          'method.response.header.Access-Control-Allow-Headers': true,
+          'method.response.header.Access-Control-Allow-Methods': true,
+          'method.response.header.Access-Control-Allow-Origin': true
+        }
+      }
+    ],
+    Integration: {
+      Type: 'MOCK',
+      IntegrationResponses: [
+        {
+          StatusCode: 200,
+          ResponseParameters: {
+            'method.response.header.Access-Control-Allow-Headers': '\'*\'',
+            'method.response.header.Access-Control-Allow-Methods': '\'POST,OPTIONS\'',
+            'method.response.header.Access-Control-Allow-Origin': '\'*\''
+          }
+        }
+      ]
+    }
   }
 };
 
@@ -352,6 +406,7 @@ const passthrough = (lambda) => ({
     WebhookApi,
     WebhookPassthroughDeployment,
     WebhookPassthroughMethod: WebhookPassthroughMethod(lambda),
+    WebhookOptionsMethod,
     WebhookResource,
     WebhookPassthroughPermission: WebhookPassthroughPermission(lambda)
   }
