@@ -221,6 +221,7 @@ const WebhookOptionsMethod = {
   Properties: {
     RestApiId: { Ref: 'WebhookApi' },
     ResourceId: { Ref: 'WebhookResource' },
+    ApiKeyRequired: false,
     AuthorizationType: 'None',
     HttpMethod: 'OPTIONS',
     MethodResponses: [
