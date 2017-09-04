@@ -1,7 +1,9 @@
 'use strict';
 
+const crypto = require('crypto');
 const cf = require('@mapbox/cloudfriend');
 
+const random = crypto.randomBytes(4).toString('hex');
 
 const Topic = (lambda) => ({
   Type: 'AWS::SNS::Topic',
@@ -48,22 +50,29 @@ const WebhookApi = {
   }
 };
 
+const WebhookStage = {
+  Type: 'AWS::ApiGateway::Stage',
+  Properties: {
+    DeploymentId: cf.ref(`WebhookDeployment${random}`),
+    StageName: 'hookshot',
+    RestApiId: cf.ref('WebhookApi'),
+    MethodSettings: [
+      {
+        HttpMethod: '*',
+        ResourcePath: '/*',
+        ThrottlingBurstLimit: 20,
+        ThrottlingRateLimit: 5
+      }
+    ]
+  }
+};
+
 const WebhookDeployment = {
   Type: 'AWS::ApiGateway::Deployment',
   DependsOn: 'WebhookMethod',
   Properties: {
     RestApiId: cf.ref('WebhookApi'),
-    StageName: 'github',
-    StageDescription: {
-      MethodSettings: [
-        {
-          HttpMethod: '*',
-          ResourcePath: '/*',
-          ThrottlingBurstLimit: 20,
-          ThrottlingRateLimit: 5
-        }
-      ]
-    }
+    StageName: 'unused'
   }
 };
 
@@ -72,17 +81,7 @@ const WebhookPassthroughDeployment = {
   DependsOn: 'WebhookPassthroughMethod',
   Properties: {
     RestApiId: cf.ref('WebhookApi'),
-    StageName: 'service',
-    StageDescription: {
-      MethodSettings: [
-        {
-          HttpMethod: '*',
-          ResourcePath: '/*',
-          ThrottlingBurstLimit: 20,
-          ThrottlingRateLimit: 5
-        }
-      ]
-    }
+    StageName: 'unused'
   }
 };
 
@@ -246,9 +245,15 @@ const WebhookOptionsMethod = {
             'method.response.header.Access-Control-Allow-Headers': '\'*\'',
             'method.response.header.Access-Control-Allow-Methods': '\'POST,OPTIONS\'',
             'method.response.header.Access-Control-Allow-Origin': '\'*\''
+          },
+          ResponseTemplates: {
+            'application/json': '{}'
           }
         }
-      ]
+      ],
+      RequestTemplates: {
+        'application/json': '{"statusCode":200}'
+      }
     }
   }
 };
@@ -383,34 +388,44 @@ const PassthroughOutputs = {
   }
 };
 
-const builder = (lambda) => ({
-  Outputs,
-  Resources: {
-    InvocationTopic: Topic(lambda),
-    InvocationPermission: Permission(lambda),
-    WebhookUser,
-    WebhookUserKey,
-    WebhookApi,
-    WebhookDeployment,
-    WebhookMethod,
-    WebhookResource,
-    WebhookFunctionRole,
-    WebhookFunction,
-    WebhookPermission
-  }
-});
+const builder = (lambda) => {
+  const resources = {
+    Outputs,
+    Resources: {
+      InvocationTopic: Topic(lambda),
+      InvocationPermission: Permission(lambda),
+      WebhookUser,
+      WebhookUserKey,
+      WebhookApi,
+      WebhookStage,
+      WebhookMethod,
+      WebhookResource,
+      WebhookFunctionRole,
+      WebhookFunction,
+      WebhookPermission
+    }
+  };
 
-const passthrough = (lambda) => ({
-  Outputs: PassthroughOutputs,
-  Resources: {
-    WebhookApi,
-    WebhookPassthroughDeployment,
-    WebhookPassthroughMethod: WebhookPassthroughMethod(lambda),
-    WebhookOptionsMethod,
-    WebhookResource,
-    WebhookPassthroughPermission: WebhookPassthroughPermission(lambda)
-  }
-});
+  resources.Resources[`WebhookDeployment${random}`] = WebhookDeployment;
+  return resources;
+};
+
+const passthrough = (lambda) => {
+  const resources = {
+    Outputs: PassthroughOutputs,
+    Resources: {
+      WebhookApi,
+      WebhookStage,
+      WebhookPassthroughMethod: WebhookPassthroughMethod(lambda),
+      WebhookOptionsMethod,
+      WebhookResource,
+      WebhookPassthroughPermission: WebhookPassthroughPermission(lambda)
+    }
+  };
+
+  resources.Resources[`WebhookDeployment${random}`] = WebhookPassthroughDeployment;
+  return resources;
+};
 
 module.exports = builder;
 module.exports.passthrough = passthrough;
