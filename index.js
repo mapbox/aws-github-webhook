@@ -374,7 +374,7 @@ const WebhookPassthroughPermission = (lambda) => ({
 const Outputs = {
   WebhookEndpoint: {
     Description: 'The HTTPS endpoint used to send github webhooks',
-    Value: cf.sub('https://${WebhookApi}.execute-api.${AWS::Region}.amazonaws.com/github/webhook')
+    Value: cf.sub('https://${WebhookApi}.execute-api.${AWS::Region}.amazonaws.com/hookshot/webhook')
   },
   WebhookSecret: {
     Description: 'A secret key to give Github to use when signing webhook requests',
@@ -385,7 +385,7 @@ const Outputs = {
 const PassthroughOutputs = {
   WebhookEndpoint: {
     Description: 'The HTTPS endpoint used to send webhooks',
-    Value: cf.sub('https://${WebhookApi}.execute-api.${AWS::Region}.amazonaws.com/service/webhook')
+    Value: cf.sub('https://${WebhookApi}.execute-api.${AWS::Region}.amazonaws.com/hookshot/webhook')
   }
 };
 
