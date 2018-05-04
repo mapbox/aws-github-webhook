@@ -152,7 +152,7 @@ const PassthroughFunction = (lambda, prefix) => ({
         '};'
       ])
     },
-    Role: cf.getAtt(`${prefix}FunctionRole`, 'Arn'),
+    Role: cf.getAtt(`${prefix}PassthroughFunctionRole`, 'Arn'),
     Description: cf.sub('Passthrough function for ${AWS::StackName}'),
     Handler: 'index.lambda',
     Runtime: 'nodejs6.10',
@@ -199,6 +199,44 @@ const OptionsMethod = (prefix) => ({
       IntegrationHttpMethod: 'POST',
       Uri: cf.sub(`arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${prefix}PassthroughFunction.Arn}/invocations`)
     }
+  }
+});
+
+const PassthroughFunctionRole = (lambda, prefix) => ({
+  Type: 'AWS::IAM::Role',
+  Properties: {
+    AssumeRolePolicyDocument: {
+      Statement: [
+        {
+          Sid: 'passthroughrole',
+          Effect: 'Allow',
+          Action: [
+            'lambda:InvokeFunction'
+          ],
+          Resource: [
+            cf.ref(lambda)
+          ]
+        }
+      ]
+    },
+    Policies: [
+      {
+        PolicyName: `${prefix}PassthroughPolicy`,
+        PolicyDocument: {
+          Statement: [
+            {
+              Effect: 'Allow',
+              Action: [
+                'logs:*'
+              ],
+              Resource: [
+                'arn:aws:logs:*:*:*'
+              ]
+            }
+          ]
+        }
+      }
+    ]
   }
 });
 
@@ -309,10 +347,10 @@ const Permission = (prefix) => ({
   }
 });
 
-const PassthroughPermission = (lambda, prefix) => ({
+const PassthroughFunctionPermission = (lambda, prefix) => ({
   Type: 'AWS::Lambda::Permission',
   Properties: {
-    FunctionName: cf.ref(lambda),
+    FunctionName: cf.ref(`${prefix}PassthroughFunction`),
     Action: 'lambda:InvokeFunction',
     Principal: 'apigateway.amazonaws.com',
     SourceArn: cf.sub(`arn:aws:execute-api:\${AWS::Region}:\${AWS::AccountId}:\${${prefix}Api}/*`)
@@ -362,8 +400,8 @@ const passthrough = (lambda, prefix = 'Webhook') => {
   Resources[`${prefix}PassthroughFunction`] = PassthroughFunction(lambda, prefix);
   Resources[`${prefix}OptionsMethod`] = OptionsMethod(prefix);
   Resources[`${prefix}Resource`] = Resource(prefix);
-  Resources[`${prefix}FunctionRole`] = FunctionRole(prefix);
-  Resources[`${prefix}Permission`] = PassthroughPermission(lambda, prefix);
+  Resources[`${prefix}PassthroughFunctionRole`] = PassthroughFunctionRole(lambda, prefix);
+  Resources[`${prefix}PassthroughFunctionPermission`] = PassthroughFunctionPermission(lambda, prefix);
   Resources[`${prefix}Deployment${random}`] = Deployment(prefix);
   Resources[`${prefix}Secret`] = Secret();
 
