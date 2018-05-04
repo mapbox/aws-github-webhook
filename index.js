@@ -236,9 +236,7 @@ const PassthroughFunctionRole = (lambda, prefix) => ({
               Action: [
                 'lambda:InvokeFunction'
               ],
-              Resource: [
-                cf.getAtt(lambda, 'Arn')
-              ]
+              Resource: cf.getAtt(lambda, 'Arn')
             }
           ]
         }
