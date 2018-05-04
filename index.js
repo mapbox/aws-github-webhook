@@ -210,12 +210,10 @@ const PassthroughFunctionRole = (lambda, prefix) => ({
         {
           Sid: 'passthroughrole',
           Effect: 'Allow',
-          Action: [
-            'lambda:InvokeFunction'
-          ],
-          Resource: [
-            cf.ref(lambda)
-          ]
+          Principal: {
+            Service: 'lambda.amazonaws.com'
+          },
+          Action: 'sts:AssumeRole'
         }
       ]
     },
@@ -231,6 +229,15 @@ const PassthroughFunctionRole = (lambda, prefix) => ({
               ],
               Resource: [
                 'arn:aws:logs:*:*:*'
+              ]
+            },
+            {
+              Effect: 'Allow',
+              Action: [
+                'lambda:InvokeFunction'
+              ],
+              Resource: [
+                cf.ref(lambda)
               ]
             }
           ]
